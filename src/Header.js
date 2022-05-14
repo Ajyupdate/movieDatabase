@@ -1,20 +1,31 @@
-import React from 'react'
+
+import React, { useState } from 'react'
+import Modal from 'react-modal'
+import Zoom from 'react-reveal/Zoom'
+import formatCurrency from './util'
 
 
-function Header({products}) {
-    // console.log(products[0].title)
-    // const firstProduct = products[0]
-    // console.log(firstProduct)
+
+function Header({products, addToCart}) {
+    
 
     var first = products.slice(0,1).map((product) => {
         return product 
     })
+    const [product, setProduct] = useState(null)
+  
+    const openModal = (product) =>{
+        setProduct(product)
+    }  
+    const closeModal = () =>{
+        setProduct(null);
+    }  
     
   return (
       <div className='header-container'>
     <div className='header'>
         <div className='nav'>
-            <div>
+            <div >
                 Moskol Engineering
             </div>
 
@@ -47,7 +58,8 @@ function Header({products}) {
                         <h4 className='new-product'>NEW PRODUCT</h4>
                         <h1 className='first-product-title'>{product.title}</h1>
                         <p className='description'>{product.description}</p>
-                        <button className='first-buy-button'> Buy Now</button>
+                        {/* <button className='first-buy-button' onClick={() => addToCart(product)}> Buy Now</button> */}
+                        <button className='first-buy-button' onClick={() => openModal(product)}> See Product</button>
                         
                     </div>
 
@@ -64,6 +76,45 @@ function Header({products}) {
         
 
     </div>
+
+    {product && (
+        <Modal isOpen={true} onRequestClose={closeModal}>
+            <Zoom>
+                <button className='close-modal' onClick={closeModal}>
+                    X
+                </button>
+                <div className='product-details'>
+                    <img src={product.image} alt={product.title}></img>
+                    <div>
+                        <p>
+                            <strong>{product.title}</strong>
+                        </p>
+                        <p>{product.description}</p>
+                        <p>
+                            Available Sizes: {" "}
+                            {product.availableSizes.map((x) =>(
+                                <span>
+                                    {" "}
+                                    <button className='button'>{x}</button>
+                                </span>
+                            ))}
+                        </p>
+                        <div className='product-price'>
+                            <div>{formatCurrency(product.price)}</div>
+                            <button className='button primary'
+                                onClick={() => {
+                                    addToCart(product);
+                                    closeModal();
+                                }}
+                            >
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Zoom>
+        </Modal>
+    )}
     </div>
 
 
