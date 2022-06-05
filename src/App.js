@@ -1,94 +1,150 @@
+import React, { useEffect, useState, useReducer } from 'react'
+import Header from "./Header"
+import Movie from './Movie' 
+import Search from './Search'
 
-import Header from './Header';
-import data from './data.json'
-import Products from './Products';
-// import Filter from './Filter';
-// import Cart from './Cart';
-import { useState } from 'react';
-import Footer from './Footer';
+const MOVIE_API_URL = "https://www.omdbapi.com/?s=swallow&apikey=4a3b711b"
 
 
-
-function App() {
-  // const [sort, setSort] = useState('')
-  // const [size, setSize] = useState('')
-  const [products, setProduct] = useState(data.products)
-  const  [cartItems, setCartItems] = useState([])
-
-  // function removeFromCart(product){
-  //   const cartItemss = cartItems.slice
-  //   setCartItems({cartItemss: cartItemss.filter((x) => x._id !== product._id)})
-  // }
- 
-  const addToCart = (product) => {
-    
-      const cartItemss = cartItems.slice()
-      // console.log(cartItems)
-     
-    let alreadyInCart = false;
-    cartItemss.forEach((item) =>{
-      if(item._id === product._id){
-        item.count++;
-        alreadyInCart= true;
-      }
-    });
-    if(!alreadyInCart){
-      cartItemss.push({...product, count: 1})
-    }
-    setCartItems(cartItemss)
-    
-  }
-  
-  
-  // function sortProducts(e){
-  //   console.log(e.target.value)
-  //   const sort = e.target.value;
-  //   setSort(sort)
-  //   setProduct(products
-  //     .slice()
-  //     .sort((a,b) => 
-  //       sort === "lowest"
-  //         ? a.price > b.price
-  //           ? 1
-  //           : -1
-  //         : sort === "highest"
-  //         ? a.price < b.price
-  //           ? 1
-  //           : -1
-  //         : a._id < b._id
-  //         ? 1
-  //           : -1 
-  //       )   
-  //   )
-
-  // }
-
-  // function filterProducts(e){
-  //   console.log(e.target.value)
-  //   if(e.target.value === ""){
-  //     setSize(e.target.value)
-  //     setProduct(data.products)
-  //   }else{
-  //     setSize(e.target.value)
-  //     setProduct(data.products.filter(
-  //       (product) => product.availableSizes.indexOf(e.target.value) >= 0
-  //     ))
-  //   }
-    
-  // }
-
-  return (
-    <div className="App" > 
-      <header>
-        {/* <Filter filterProducts={filterProducts} sortProducts={sortProducts} size={size} sort={sort} count={products.length}/> */}
-        <Header products={products} addToCart={addToCart}/>
-        <Products products={products} addToCart={addToCart}/> 
-        <Footer/>
-      </header> 
-      
-      {/* <Cart removeFromCart={removeFromCart} cartItems={cartItems}/>    */}
-    </div>
-  );
+const initialtState = {
+  loading: true,
+  movies: [],
+  errorMessage: null
 }
 
-export default App;
+const reducer = (state, action) =>{
+  switch(action.type){
+    case "SEARCH_MOVIE_SUCCESS":
+      return {
+        ...state,
+        loading: true,
+        errorMessage: null
+      };
+
+    case "SEARCH_MOVIES_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        movies: action.payload
+      };
+      
+    case "SEARCH_MOVIES_FAILURE":
+      return {
+        ...state,
+        loading: false,
+        errorMessage: action.error
+      };
+    default:
+      return state;  
+  }
+}
+const App = () => {
+   const [state, dispatch] = useReducer(reducer, initialtState)
+
+   useEffect(() =>{
+
+    fetch(MOVIE_API_URL)
+      .then(response => response.json())
+      .then(jsonResponse => {
+        
+        dispatch({
+          type: "SEARCH_MOVIES_SUCCESS",
+          payload: jsonResponse.Search
+        });
+      });
+   }, []);
+  // const [loading, setLoading] = useState(true);
+  // const [movies, setMovies] = useState([])
+  // const [errorMessage, setErrorMessage] = useState(null)
+  // const [Title, setTitle] = useState([])
+  
+  // useEffect(() => {
+  //   fetch(MOVIE_API_URL)
+  //     .then(response => response.json())
+  //     .then(jsonResponse => {
+  //       setMovies(jsonResponse.Search)
+  //       setLoading(false);
+  //     })
+  // }, [])
+
+  // const search = searchValue => {
+  //   setLoading(true);
+  //   setErrorMessage(null);
+
+  //   fetch(`https://www.omdbapi.com/?s=${searchValue}&apikey=4a3b711b`)
+    
+  //     .then(response => {
+  //       if(!response.ok){
+  //         throw Error("could not get list check your internet setting")
+  //       }
+  //       return response.json()
+  //     })
+  //     .then(jsonResponse => {
+  //       setMovies(jsonResponse.Search);
+  //       console.log(jsonResponse.Search)
+  //       setLoading(false)
+  //       setErrorMessage(null)
+  //       jsonResponse.Search.map((movie) => (
+  //         console.log(setTitle(movie.Title))
+  //       ) )
+  //     })
+      
+  //     .catch(err => {
+  //       setLoading(false)
+  //       setErrorMessage("could not reach list: check your internet connection")
+  //     })
+  // }
+
+  const search = searchValue => {
+    dispatch({
+      type: "SEARCH_MOVIES_REQUEST"
+    });
+
+    fetch(`https://www.omdbapi.com/?s=${searchValue}&apikey=4a3b711b`)
+    
+      .then(response => response.json())
+      
+      .then(jsonResponse => {
+        //console.log(jsonResponse)
+        if(jsonResponse.Response === "True"){
+          dispatch({
+            type: "SEARCH_MOVIES_SUCCESS",
+            payload: jsonResponse.Search
+          })
+        }else {
+          dispatch({
+            type: "SEARCH_MOVIES_FAILURE",
+            error: jsonResponse.Error
+          })
+        }
+        
+      })
+  }
+
+  const { movies, errorMessage, loading } = state;
+
+  return (
+    <div className='App'>
+      <Header text="HOOKED"></Header>
+      <Search search={search}/>
+      <p className='App-intro'>Sharing a few of my favorite movies</p>
+      
+      
+      <div className='movies'>
+        
+        {loading && !errorMessage ? (
+          <span>loading...</span>
+        ) : errorMessage ? (
+          <div className='errorMessage'>{errorMessage}</div>
+        ) : (
+          movies.map((movie, index) => (
+            <Movie key={`${index} -${movie.Title}`} movie={movie} />
+          ))
+        )}
+      </div>
+
+    </div>
+  )
+}
+
+export default App
